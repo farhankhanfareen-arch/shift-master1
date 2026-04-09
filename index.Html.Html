@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShiftMaster - Employee & Shift Management</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-dark: #4338ca;
+            --secondary: #64748b;
+            --bg-body: #f1f5f9;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Navigation */
+        aside {
+            width: 260px;
+            background-color: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 2.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            width: 100%;
+            padding: 1rem;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.2s;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        nav button:hover {
+            background-color: #f8fafc;
+            color: var(--primary);
+        }
+
+        nav button.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        header {
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--text-main);
+        }
+
+        /* Views */
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards & Grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Employee Card Specifics */
+        .emp-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .emp-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--border);
+        }
+
+        .emp-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .emp-info p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .stat-item span {
+            display: block;
+            font-weight: 600;
+        }
+        
+        .stat-item label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-secondary { background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: #e2e8f0; }
+        .btn-danger { background: #fee2e2; color: var(--danger); }
+        .btn-danger:hover { background: #fecaca; }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+        .w-100 { width: 100%; }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+        .form-row .form-group { flex: 1; }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            transform: scale(0.95);
+            transition: transform 0.2s;
+        }
+
+        .modal-overlay.open .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        /* Shift Types Colors */
+        .shift-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .shift-morning { background: #dbeafe; color: #1e40af; } /* Blue */
+        .shift-evening { background: #ffedd5; color: #9a3412; } /* Orange */
+        .shift-night { background: #e2e8f0; color: #334155; } /* Slate */
+        .shift-midnight { background: #f3e8ff; color: #6b21a8; } /* Purple */
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+            background: var(--bg-card);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .toast {
+            background: #333;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 250px;
+        }
+        
+        .toast.success { border-left: 5px solid var(--success); }
+        .toast.error { border-left: 5px solid var(--danger); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Profile Specific */
+        .profile-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+        .profile-img-lg {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .financial-summary {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        .fin-card {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            min-width: 150px;
+        }
+        .fin-card h4 { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
+        .fin-card .value { font-size: 1.5rem; font-weight: 700; }
+        .val-pos { color: var(--success); }
+        .val-neg { color: var(--danger); }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside>
+        <div class="logo">
+            <span>📅</span> ShiftMaster
+        </div>
+        <nav>
+            <button class="active" onclick="app.navigate('dashboard')">
+                <span>📊</span> Dashboard
+            </button>
+            <button onclick="app.navigate('employees')">
+                <span>👥</span> Employees
+            </button>
+            <button onclick="app.navigate('shifts')">
+                <span>🕒</span> Shift Planner
+            </button>
+            <button onclick="app.navigate('financials')">
+                <span>💰</span> Financials
+            </button>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main>
+        
+        <!-- Dashboard View -->
+        <section id="view-dashboard" class="view-section active">
+            <header>
+                <h1>Dashboard</h1>
+                <button class="btn btn-primary" onclick="app.openModal('modal-add-employee')">+ New Employee</button>
+            </header>
+
+            <div class="grid-container" style="margin-bottom: 2rem;">
+                <div class="card">
+                    <h3>Total Employees</h3>
+                    <p class="value" id="dash-total-emp" style="font-size: 2rem; font-weight: 700;">0</p>
+                </div>
+                <div class="card">
+                    <h3>Shifts This Week</h3>
+                    <p class="value" id="dash-week-shifts" style="font-size: 2rem; font-weight: 700;">0</p>
+                </div>
+                <div class="card">
+                    <h3>Pending Payroll</h3>
+                    <p class="value" id="dash-payroll" style="font-size: 2rem; font-weight: 700;">$0</p>
+                </div>
+            </div>
+
+            <h2>Recent Employees</h2>
+            <div id="dashboard-emp-list" class="grid-container" style="margin-top: 1rem;">
+                <!-- Employee Cards Injected Here -->
+            </div>
+        </section>
+
+        <!-- Employees View -->
+        <section id="view-employees" class="view-section">
+            <header>
+                <h1>Employees</h1>
+                <button class="btn btn-primary" onclick="app.openModal('modal-add-employee')">+ Add Employee</button>
+            </header>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Position/Role</th>
+                            <th>Base Rate / Hour</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employees-table-body">
+                        <!-- Table Rows -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Shift Planner View -->
+        <section id="view-shifts" class="view-section">
+            <header>
+                <h1>Shift Planner</h1>
+                <button class="btn btn-primary" onclick="app.openModal('modal-add-shift')">+ Assign Shift</button>
+            </header>
+
+            <div class="form-group" style="max-width: 300px;">
+                <label>Filter by Employee</label>
+                <select id="shift-filter-emp" class="form-control" onchange="app.renderShifts()">
+                    <option value="all">All Employees</option>
+                    <!-- Options Populated Dynamically -->
+                </select>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Employee</th>
+                            <th>Shift Type</th>
+                            <th>Hours</th>
+                            <th>Rate Earned</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shifts-table-body">
+                        <!-- Shifts Rows -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Financials / Advance View -->
+        <section id="view-financials" class="view-section">
+            <header>
+                <h1>Financials & Advances</h1>
+            </header>
+
+            <div class="form-row">
+                <div class="card" style="flex: 2;">
+                    <h3>Record Advance Payment</h3>
+                    <form id="form-advance" onsubmit="app.addAdvance(event)" style="margin-top: 1rem;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Employee</label>
+                                <select id="adv-emp-id" class="form-control" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Amount</label>
+                                <input type="number" id="adv-amount" class="form-control" min="1" required placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Note</label>
+                            <input type="text" id="adv-note" class="form-control" placeholder="e.g. Emergency loan">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Record Payment</button>
+                    </form>
+                </div>
+
+                <div class="card" style="flex: 1;">
+                    <h3>Summary</h3>
+                    <div class="stats-row" style="flex-direction: column; gap: 1rem;">
+                        <div class="stat-item">
+                            <label>Total Advances Given</label>
+                            <span id="fin-total-advances" style="font-size: 1.2rem; color: var(--danger);">$0</span>
+                        </div>
+                        <div class="stat-item">
+                            <label>Total Shift Earnings</label>
+                            <span id="fin-total-earnings" style="font-size: 1.2rem; color: var(--success);">$0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin: 2rem 0 1rem;">Advance History</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Employee</th>
+                            <th>Amount</th>
+                            <th>Note</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="advances-table-body">
+                        <!-- Advances Rows -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Employee Profile Detail View (Hidden by default) -->
+        <section id="view-profile" class="view-section">
+            <button class="btn btn-secondary btn-sm" onclick="app.navigate('employees')" style="margin-bottom: 1rem;">← Back to Employees</button>
+            
+            <div class="profile-header">
+                <img src="" alt="Profile" id="prof-img" class="profile-img-lg">
+                <div>
+                    <h1 id="prof-name">Name</h1>
+                    <p id="prof-role" style="color: var(--text-muted);">Role</p>
+                    <div class="financial-summary">
+                        <div class="fin-card">
+                            <h4>Total Earned</h4>
+                            <div class="value val-pos" id="prof-earned">$0.00</div>
+                        </div>
+                        <div class="fin-card">
+                            <h4>Advance Taken</h4>
+                            <div class="value val-neg" id="prof-advance">$0.00</div>
+                        </div>
+                        <div class="fin-card">
+                            <h4>Net Balance</h4>
+                            <div class="value" id="prof-balance">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="card" style="flex: 1;">
+                    <h3>Shift History</h3>
+                    <div class="table-container" style="margin-top: 1rem; box-shadow: none; border: 1px solid var(--border);">
+                        <table>
+                            <thead><tr><th>Date</th><th>Type</th><th>Amount</th></tr></thead>
+                            <tbody id="prof-shifts-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card" style="flex: 1;">
+                    <h3>Payment History</h3>
+                    <div class="table-container" style="margin-top: 1rem; box-shadow: none; border: 1px solid var(--border);">
+                        <table>
+                            <thead><tr><th>Date</th><th>Amount</th><th>Note</th></tr></thead>
+                            <tbody id="prof-adv-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal: Add Employee -->
+    <div id="modal-add-employee" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Add New Employee</h2>
+                <button class="close-modal" onclick="app.closeModal('modal-add-employee')">&times;</button>
+            </div>
+            <form onsubmit="app.addEmployee(event)">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Role / Position</label>
+                    <input type="text" name="role" class="form-control" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Base Hourly Rate ($)</label>
+                        <input type="number" name="rate" class="form-control" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Photo (Optional URL)</label>
+                        <input type="url" name="photo" class="form-control" placeholder="https://...">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Create Profile</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add Shift -->
+    <div id="modal-add-shift" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Assign Shift</h2>
+                <button class="close-modal" onclick="app.closeModal('modal-add-shift')">&times;</button>
+            </div>
+            <form onsubmit="app.addShift(event)">
+                <div class="form-group">
+                    <label>Employee</label>
+                    <select id="shift-emp-select" name="empId" class="form-control" required></select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" name="date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Shift Type</label>
+                        <select name="type" class="form-control" id="shift-type-select" onchange="app.updateShiftHours()" required>
+                            <option value="morning">Morning (Standard)</option>
+                            <option value="evening">Evening (Standard)</option>
+                            <option value="night">Night (+10%)</option>
+                            <option value="midnight">Midnight (+20%)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Duration (Hours)</label>
+                    <input type="number" name="hours" id="shift-hours" class="form-control" value="8" min="1" max="24" required>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <input type="text" name="notes" class="form-control" placeholder="e.g. Covered for sick colleague">
+                </div>
+                <div style="background: #f8fafc; padding: 10px; border-radius: 6px; margin-bottom: 1rem;">
+                    <small>Estimated Cost: </small> <strong id="shift-est-cost">$0.00</strong>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Assign Shift</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-area"></div>
+
+    <script>
+        // --- Data & State Management ---
+        const DB_KEYS = {
+            EMPLOYEES: 'shiftMaster_employees',
+            SHIFTS: 'shiftMaster_shifts',
+            ADVANCES: 'shiftMaster_advances'
+        };
+
+        const SHIFT_RATES = {
+            morning: 1.0,   // Standard Rate
+            evening: 1.0,   // Standard Rate
+            night: 1.1,     // +10%
+            midnight: 1.2   // +20%
+        };
+
+        const SHIFT_DEFAULTS = {
+            morning: 8,
+            evening: 8,
+            night: 8,
+            midnight: 10
+        };
+
+        // --- Core Application Class ---
+        class ShiftApp {
+            constructor() {
+                this.employees = JSON.parse(localStorage.getItem(DB_KEYS.EMPLOYEES)) || [];
+                this.shifts = JSON.parse(localStorage.getItem(DB_KEYS.SHIFTS)) || [];
+                this.advances = JSON.parse(localStorage.getItem(DB_KEYS.ADVANCES)) || [];
+                
+                this.init();
+            }
+
+            init() {
+                this.renderDashboard();
+                this.renderEmployees();
+                this.populateEmployeeDropdowns();
+                this.renderShifts();
+                this.renderFinancials();
+
+                // Set default date for shift modal
+                document.querySelector('input[name="date"]').valueAsDate = new Date();
+                
+                // Listen for shift rate calculation changes
+                document.querySelector('#shift-emp-select').addEventListener('change', () => this.updateShiftHours());
+                this.updateShiftHours();
+            }
+
+            saveData() {
+                localStorage.setItem(DB_KEYS.EMPLOYEES, JSON.stringify(this.employees));
+                localStorage.setItem(DB_KEYS.SHIFTS, JSON.stringify(this.shifts));
+                localStorage.setItem(DB_KEYS.ADVANCES, JSON.stringify(this.advances));
+                this.renderAll();
+            }
+
+            renderAll() {
+                this.renderDashboard();
+                this.renderEmployees();
+                this.renderShifts();
+                this.renderFinancials();
+            }
+
+            // --- Navigation ---
+            navigate(viewId) {
+                // Hide all views
+                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+                // Show target view
+                document.getElementById(`view-${viewId}`).classList.add('active');
+                
+                // Update sidebar active state
+                document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+                // Find the button that calls this view (approximation for simplicity)
+                const btns = Array.from(document.querySelectorAll('nav button'));
+                const activeBtn = btns.find(b => b.getAttribute('onclick').includes(viewId));
+                if(activeBtn) activeBtn.classList.add('active');
+            }
+
+            // --- Employee Logic ---
+            addEmployee(e) {
+                e.preventDefault();
+                const form = e.target;
+                const newEmp = {
+                    id: Date.now().toString(),
+                    name: form.name.value,
+                    role: form.role.value,
+                    rate: parseFloat(form.rate.value),
+                    photo: form.photo.value || `https://picsum.photos/seed/${form.name.value}/200/200`
+                };
+
+                this.employees.push(newEmp);
+                this.saveData();
+                this.closeModal('modal-add-employee');
+                form.reset();
+                this.showToast('Employee added successfully', 'success');
+                this.populateEmployeeDropdowns();
+            }
+
+            deleteEmployee(id) {
+                if(confirm('Are you sure? This will also delete their shifts and payment records.')) {
+                    this.employees = this.employees.filter(e => e.id !== id);
+                    this.shifts = this.shifts.filter(s => s.empId !== id);
+                    this.advances = this.advances.filter(a => a.empId !== id);
+                    this.saveData();
+                    this.showToast('Employee removed', 'success');
+                }
+            }
+
+            // --- Shift Logic ---
+            addShift(e) {
+                e.preventDefault();
+                const form = e.target;
+                const empId = form.empId.value;
+                const employee = this.employees.find(e => e.id === empId);
+                const type = form.type.value;
+                const hours = parseFloat(form.hours.value);
+                
+                // Calculate Rate
+                const multiplier = SHIFT_RATES[type];
+                const hourlyRate = employee.rate * multiplier;
+                const totalPay = hourlyRate * hours;
+
+                const newShift = {
+                    id: Date.now().toString(),
+                    empId: empId,
+                    date: form.date.value,
+                    type: type,
+                    hours: hours,
+                    totalPay: totalPay,
+                    notes: form.notes.value
+                };
+
+                this.shifts.push(newShift);
+                this.saveData();
+                this.closeModal('modal-add-shift');
+                form.reset();
+                document.querySelector('input[name="date"]').valueAsDate = new Date(); // Reset date
+                this.updateShiftHours();
+                this.showToast('Shift assigned successfully', 'success');
+            }
+
+            deleteShift(id) {
+                if(confirm('Delete this shift record?')) {
+                    this.shifts = this.shifts.filter(s => s.id !== id);
+                    this.saveData();
+                }
+            }
+
+            updateShiftHours() {
+                const empId = document.querySelector('#shift-emp-select').value;
+                const type = document.querySelector('#shift-type-select').value;
+                const hoursInput = document.querySelector('#shift-hours');
+                
+                // Auto-set hours based on type
+                hoursInput.value = SHIFT_DEFAULTS[type];
+                
+                // Calculate cost preview
+                if(empId) {
+                    const emp = this.employees.find(e => e.id === empId);
+                    if(emp) {
+                        const rate = emp.rate * SHIFT_RATES[type];
+                        const cost = rate * hoursInput.value;
+                        document.getElementById('shift-est-cost').textContent = `$${cost.toFixed(2)} (${rate.toFixed(2)}/hr)`;
+                    }
+                }
+            }
+
+            // --- Advance Logic ---
+            addAdvance(e) {
+                e.preventDefault();
+                const empId = document.getElementById('adv-emp-id').value;
+                const amount = parseFloat(document.getElementById('adv-amount').value);
+                const note = document.getElementById('adv-note').value;
+
+                const newAdv = {
+                    id: Date.now().toString(),
+                    empId: empId,
+                    amount: amount,
+                    note: note,
+                    date: new Date().toISOString().split('T')[0]
+                };
+
+                this.advances.push(newAdv);
+                this.saveData();
+                e.target.reset();
+                this.showToast('Advance payment recorded', 'success');
+            }
+
+            deleteAdvance(id) {
+                if(confirm('Remove this advance record?')) {
+                    this.advances = this.advances.filter(a => a.id !== id);
+                    this.saveData();
+                }
+            }
+
+            // --- Render Functions ---
+            renderDashboard() {
+                // Stats
+                document.getElementById('dash-total-emp').textContent = this.employees.length;
+                
+                // Shifts this week (simple check: last 7 days)
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                const recentShifts = this.shifts.filter(s => new Date(s.date) >= oneWeekAgo);
+                document.getElementById('dash-week-shifts').textContent = recentShifts.length;
+
+                // Total Payroll (Sum of all shifts)
+                const totalPayroll = this.shifts.reduce((sum, s) => sum + s.totalPay, 0);
+                document.getElementById('dash-payroll').textContent = `$${totalPayroll.toFixed(2)}`;
+
+                // Recent Employees (Last 4)
+                const recentEmps = [...this.employees].reverse().slice(0, 4);
+                const container = document.getElementById('dashboard-emp-list');
+                container.innerHTML = '';
+                recentEmps.forEach(emp => {
+                    container.innerHTML += `
+                        <div class="card" onclick="app.viewProfile('${emp.id}')" style="cursor:pointer">
+                            <div class="emp-header">
+                                <img src="${emp.photo}" class="emp-img" alt="${emp.name}">
+                                <div class="emp-info">
+                                    <h3>${emp.name}</h3>
+                                    <p>${emp.role}</p>
+                                </div>
+                            </div>
+                            <div class="stats-row">
+                                <div class="stat-item">
+                                    <label>Rate</label>
+                                    <span>$${emp.rate}/hr</span>
+                                </div>
+                                <div class="stat-item">
+                                    <label>Shifts</label>
+                                    <span>${this.shifts.filter(s=>s.empId===emp.id).length}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            renderEmployees() {
+                const tbody = document.getElementById('employees-table-body');
+                tbody.innerHTML = '';
+                this.employees.forEach(emp => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <img src="${emp.photo}" style="width:40px; height:40px; border-radius:50%;">
+                                    <strong>${emp.name}</strong>
+                                </div>
+                            </td>
+                            <td>${emp.role}</td>
+                            <td>$${emp.rate.toFixed(2)}</td>
+                            <td>
+                                <button class="btn btn-sm btn-secondary" onclick="app.viewProfile('${emp.id}')">View</button>
+                                <button class="btn btn-sm btn-danger" onclick="app.deleteEmployee('${emp.id}')">&times;</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            renderShifts() {
+                const filterId = document.getElementById('shift-filter-emp').value;
+                const tbody = document.getElementById('shifts-table-body');
+                tbody.innerHTML = '';
+
+                let filteredShifts = this.shifts;
+                if(filterId !== 'all') {
+                    filteredShifts = filteredShifts.filter(s => s.empId === filterId);
+                }
+
+                // Sort by date descending
+                filteredShifts.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+                filteredShifts.forEach(shift => {
+                    const emp = this.employees.find(e => e.id === shift.empId);
+                    if(!emp) return; // Skip if employee deleted
+
+                    let badgeClass = '';
+                    switch(shift.type) {
+                        case 'morning': badgeClass = 'shift-morning'; break;
+                        case 'evening': badgeClass = 'shift-evening'; break;
+                        case 'night': badgeClass = 'shift-night'; break;
+                        case 'midnight': badgeClass = 'shift-midnight'; break;
+                    }
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${shift.date}</td>
+                            <td>${emp.name}</td>
+                            <td><span class="shift-badge ${badgeClass}">${shift.type}</span></td>
+                            <td>${shift.hours} hrs</td>
+                            <td>$${shift.totalPay.toFixed(2)}</td>
+                            <td><button class="btn btn-sm btn-danger" onclick="app.deleteShift('${shift.id}')">&times;</button></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            renderFinancials() {
+                // Summary
+                const totalAdv = this.advances.reduce((sum, a) => sum + a.amount, 0);
+                const totalEarn = this.shifts.reduce((sum, s) => sum + s.totalPay, 0);
+                
+                document.getElementById('fin-total-advances').textContent = `$${totalAdv.toFixed(2)}`;
+                document.getElementById('fin-total-earnings').textContent = `$${totalEarn.toFixed(2)}`;
+
+                // Table
+                const tbody = document.getElementById('advances-table-body');
+                tbody.innerHTML = '';
+                // Sort by date desc
+                const sortedAdv = [...this.advances].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+                sortedAdv.forEach(adv => {
+                    const emp = this.employees.find(e => e.id === adv.empId);
+                    const empName = emp ? emp.name : 'Unknown';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${adv.date}</td>
+                            <td>${empName}</td>
+                            <td style="color:var(--danger)">-$${adv.amount.toFixed(2)}</td>
+                            <td>${adv.note || '-'}</td>
+                            <td><button class="btn btn-sm btn-danger" onclick="app.deleteAdvance('${adv.id}')">&times;</button></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            viewProfile(id) {
+                const emp = this.employees.find(e => e.id === id);
+                if(!emp) return;
+
+                // Header
+                document.getElementById('prof-img').src = emp.photo;
+                document.getElementById('prof-name').textContent = emp.name;
+                document.getElementById('prof-role').textContent = emp.role;
+
+                // Calc Financials
+                const empShifts = this.shifts.filter(s => s.empId === id);
+                const empAdvs = this.advances.filter(a => a.empId === id);
+                const earned = empShifts.reduce((sum, s) => sum + s.totalPay, 0);
+                const taken = empAdvs.reduce((sum, a) => sum + a.amount, 0);
+                const balance = earned - taken;
+
+                document.getElementById('prof-earned').textContent = `$${earned.toFixed(2)}`;
+                document.getElementById('prof-advance').textContent = `$${taken.toFixed(2)}`;
+                const balEl = document.getElementById('prof-balance');
+                balEl.textContent = `$${balance.toFixed(2)}`;
+                balEl.className = `value ${balance >= 0 ? 'val-pos' : 'val-neg'}`;
+
+                // History Tables
+                const shiftBody = document.getElementById('prof-shifts-body');
+                shiftBody.innerHTML = '';
+                empShifts.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(s => {
+                    shiftBody.innerHTML += `<tr><td>${s.date}</td><td>${s.type}</td><td>$${s.totalPay.toFixed(2)}</td></tr>`;
+                });
+
+                const advBody = document.getElementById('prof-adv-body');
+                advBody.innerHTML = '';
+                empAdvs.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(a => {
+                    advBody.innerHTML += `<tr><td>${a.date}</td><td>$${a.amount.toFixed(2)}</td><td>${a.note}</td></tr>`;
+                });
+
+                this.navigate('profile');
+            }
+
+            populateEmployeeDropdowns() {
+                const options = this.employees.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+                const defaultOpt = '<option value="" disabled selected>Select Employee</option>';
+                
+                document.getElementById('shift-emp-select').innerHTML = defaultOpt + options;
+                document.getElementById('adv-emp-id').innerHTML = options; // For finance
+                document.getElementById('shift-filter-emp').innerHTML = '<option value="all">All Employees</option>' + options;
+            }
+
+            // --- UI Utilities ---
+            openModal(id) {
+                document.getElementById(id).classList.add('open');
+            }
+
+            closeModal(id) {
+                document.getElementById(id).classList.remove('open');
+            }
+
+            showToast(msg, type = 'success') {
+                const container = document.getElementById('toast-area');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `<span>${type === 'success' ? '✓' : '⚠'}</span> ${msg}`;
+                container.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+        }
+
+        // Initialize App
+        const app = new ShiftApp();
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.classList.remove('open');
+            }
+        }
+    </script>
+</body>
+</html>
