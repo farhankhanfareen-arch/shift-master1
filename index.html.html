@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShiftFlow — Employee Management</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@200;400;500;600;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['Space Grotesk', 'sans-serif'],
+        body: ['DM Sans', 'sans-serif'],
+      }
+    }
+  }
+}
+</script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg-elevated: #161822;
+    --bg-card: #1c1f2e;
+    --bg-hover: #252839;
+    --border: #2a2d3e;
+    --fg: #e8e9ed;
+    --fg-muted: #7a7d8e;
+    --accent: #e8a43a;
+    --accent-dim: rgba(232,164,58,0.12);
+    --success: #34d399;
+    --success-dim: rgba(52,211,153,0.12);
+    --danger: #f87171;
+    --danger-dim: rgba(248,113,113,0.12);
+    --info: #60a5fa;
+    --info-dim: rgba(96,165,250,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--fg-muted); }
+
+  /* Background atmosphere */
+  .bg-glow {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(150px);
+    opacity: 0.07;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    background: var(--bg-elevated);
+    border-right: 1px solid var(--border);
+    transition: width 0.3s ease;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--fg-muted);
+    transition: all 0.2s;
+    font-weight: 500;
+    font-size: 14px;
+  }
+  .nav-item:hover { background: var(--bg-hover); color: var(--fg); }
+  .nav-item.active {
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+  .nav-item.active i { color: var(--accent); }
+  .nav-item i { width: 20px; text-align: center; font-size: 15px; }
+
+  /* Cards */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    transition: all 0.25s;
+  }
+  .card:hover { border-color: #3a3d50; }
+
+  /* Stat card */
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 14px 14px 0 0;
+  }
+  .stat-card:hover { transform: translateY(-2px); border-color: #3a3d50; }
+
+  /* Input */
+  .input-field {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--fg);
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    width: 100%;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .input-field:focus { border-color: var(--accent); }
+  .input-field::placeholder { color: var(--fg-muted); }
+
+  select.input-field { cursor: pointer; appearance: none; }
+  textarea.input-field { resize: vertical; min-height: 80px; }
+
+  /* Buttons */
+  .btn-primary {
+    background: var(--accent);
+    color: #0f1117;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: var(--bg-hover);
+    color: var(--fg);
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-secondary:hover { background: var(--border); }
+
+  .btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+
+  .btn-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    background: var(--bg-hover);
+    color: var(--fg-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px;
+  }
+  .btn-icon:hover { color: var(--fg); border-color: #3a3d50; }
+
+  /* Badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal-content {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    max-width: 520px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    transform: translateY(20px) scale(0.97);
+    transition: transform 0.3s;
+  }
+  .modal-overlay.open .modal-content { transform: translateY(0) scale(1); }
+
+  /* Avatar */
+  .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+  }
+  .avatar-lg {
+    width: 90px;
+    height: 90px;
+    border-radius: 18px;
+    border: 3px solid var(--border);
+  }
+
+  /* Photo upload */
+  .photo-upload {
+    width: 100px;
+    height: 100px;
+    border-radius: 18px;
+    border: 2px dashed var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg);
+  }
+  .photo-upload:hover { border-color: var(--accent); background: var(--accent-dim); }
+  .photo-upload img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Table */
+  .data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  .data-table th {
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--fg-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 14px 16px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tbody tr { transition: background 0.15s; }
+  .data-table tbody tr:hover { background: var(--bg-hover); }
+
+  /* Toast */
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toast {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.5s forwards;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes fadeOut { to { transform: translateX(100%); opacity: 0; } }
+
+  /* Tab */
+  .tab-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--fg-muted);
+    background: transparent;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .tab-btn:hover { color: var(--fg); }
+  .tab-btn.active { background: var(--accent-dim); color: var(--accent); }
+
+  /* Detail panel */
+  .detail-panel {
+    position: fixed;
+    top: 0;
+    right: -480px;
+    width: 460px;
+    height: 100vh;
+    background: var(--bg-elevated);
+    border-left: 1px solid var(--border);
+    z-index: 90;
+    transition: right 0.35s cubic-bezier(0.4,0,0.2,1);
+    overflow-y: auto;
+  }
+  .detail-panel.open { right: 0; }
+
+  /* Animate on load */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeUp 0.5s ease forwards;
+  }
+  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+  /* Note card */
+  .note-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    position: relative;
+    transition: all 0.2s;
+  }
+  .note-card:hover { border-color: #3a3d50; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .mobile-nav { display: flex !important; }
+    .detail-panel { width: 100%; right: -100%; }
+    .stat-grid { grid-template-columns: 1fr 1fr !important; }
+  }
+
+  /* Pulse dot */
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Shift type indicators */
+  .shift-bar {
+    height: 6px;
+    border-radius: 3px;
+    width: 40px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Background atmosphere -->
+<div class="bg-glow" style="top:-200px;left:-100px;background:var(--accent);"></div>
+<div class="bg-glow" style="bottom:-200px;right:-100px;background:#60a5fa;"></div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar fixed left-0 top-0 h-full w-[240px] z-50 flex flex-col py-6 px-4">
+  <div class="flex items-center gap-3 px-3 mb-8">
+    <div style="background:var(--accent);width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+      <i class="fa-solid fa-bolt" style="color:#0f1117;font-size:16px;"></i>
+    </div>
+    <div>
+      <h1 class="font-display font-bold text-lg leading-tight" style="color:var(--fg);">ShiftFlow</h1>
+      <p style="font-size:10px;color:var(--fg-muted);letter-spacing:1px;text-transform:uppercase;">Management</p>
+    </div>
+  </div>
+
+  <nav class="flex flex-col gap-1 flex-1">
+    <div class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard')">
+      <i class="fa-solid fa-grid-2"></i> Dashboard
+    </div>
+    <div class="nav-item" data-page="employees" onclick="switchPage('employees')">
+      <i class="fa-solid fa-users"></i> Employees
+    </div>
+    <div class="nav-item" data-page="shifts" onclick="switchPage('shifts')">
+      <i class="fa-solid fa-clock"></i> Shifts
+    </div>
+    <div class="nav-item" data-page="payments" onclick="switchPage('payments')">
+      <i class="fa-solid fa-wallet"></i> Payments
+    </div>
+    <div class="nav-item" data-page="notes" onclick="switchPage('notes')">
+      <i class="fa-solid fa-note-sticky"></i> Notes
+    </div>
+  </nav>
+
+  <div class="card p-3 mt-4" style="background:var(--accent-dim);border-color:rgba(232,164,58,0.2);">
+    <p style="font-size:12px;color:var(--accent);font-weight:600;margin-bottom:4px;">Quick Tip</p>
+    <p style="font-size:11px;color:var(--fg-muted);line-height:1.5;">Click on any employee row to view their full profile and details.</p>
+  </div>
+</aside>
+
+<!-- Mobile bottom nav -->
+<nav class="mobile-nav fixed bottom-0 left-0 right-0 z-50 hidden items-center justify-around py-3 px-2" style="background:var(--bg-elevated);border-top:1px solid var(--border);">
+  <button onclick="switchPage('dashboard')" class="flex flex-col items-center gap-1 text-xs" style="color:var(--accent);">
+    <i class="fa-solid fa-grid-2 text-base"></i>Home
+  </button>
+  <button onclick="switchPage('employees')" class="flex flex-col items-center gap-1 text-xs" style="color:var(--fg-muted);">
+    <i class="fa-solid fa-users text-base"></i>Team
+  </button>
+  <button onclick="switchPage('shifts')" class="flex flex-col items-center gap-1 text-xs" style="color:var(--fg-muted);">
+    <i class="fa-solid fa-clock text-base"></i>Shifts
+  </button>
+  <button onclick="switchPage('payments')" class="flex flex-col items-center gap-1 text-xs" style="color:var(--fg-muted);">
+    <i class="fa-solid fa-wallet text-base"></i>Pay
+  </button>
+  <button onclick="switchPage('notes')" class="flex flex-col items-center gap-1 text-xs" style="color:var(--fg-muted);">
+    <i class="fa-solid fa-note-sticky text-base"></i>Notes
+  </button>
+</nav>
+
+<!-- Main content -->
+<main class="ml-[240px] min-h-screen p-8 pb-20 relative z-10" id="mainContent">
+
+  <!-- Dashboard Page -->
+  <section id="page-dashboard" class="page">
+    <div class="flex items-center justify-between mb-8 fade-up">
+      <div>
+        <h2 class="font-display font-bold text-2xl mb-1">Dashboard</h2>
+        <p style="color:var(--fg-muted);font-size:14px;">Overview of your workforce activity</p>
+      </div>
+      <button class="btn-primary" onclick="openAddEmployee()">
+        <i class="fa-solid fa-plus"></i> Add Employee
+      </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid gap-4 mb-8 stat-grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="stat-card fade-up" style="animation-delay:0.05s;">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);border-radius:14px 14px 0 0;"></div>
+        <div class="flex items-center justify-between mb-3">
+          <div style="width:40px;height:40px;border-radius:10px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;">
+            <i class="fa-solid fa-users" style="color:var(--accent);font-size:14px;"></i>
+          </div>
+          <span class="badge" style="background:var(--success-dim);color:var(--success);">
+            <i class="fa-solid fa-arrow-up" style="font-size:8px;"></i> Active
+          </span>
+        </div>
+        <p class="font-display font-bold text-2xl" id="statTotalEmp">0</p>
+        <p style="font-size:12px;color:var(--fg-muted);margin-top:2px;">Total Employees</p>
+      </div>
+      <div class="stat-card fade-up" style="animation-delay:0.1s;">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--success);border-radius:14px 14px 0 0;"></div>
+        <div class="flex items-center justify-between mb-3">
+          <div style="width:40px;height:40px;border-radius:10px;background:var(--success-dim);display:flex;align-items:center;justify-content:center;">
+            <i class="fa-solid fa-clock" style="color:var(--success);font-size:14px;"></i>
+          </div>
+          <span class="badge" style="background:var(--info-dim);color:var(--info);">Today</span>
+        </div>
+        <p class="font-display font-bold text-2xl" id="statOnShift">0</p>
+        <p style="font-size:12px;color:var(--fg-muted);margin-top:2px;">On Shift Now</p>
+      </div>
+      <div class="stat-card fade-up" style="animation-delay:0.15s;">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--info);border-radius:14px 14px 0 0;"></div>
+        <div class="flex items-center justify-between mb-3">
+          <div style="width:40px;height:40px;border-radius:10px;background:var(--info-dim);display:flex;align-items:center;justify-content:center;">
+            <i class="fa-solid fa-calendar-check" style="color:var(--info);font-size:14px;"></i>
+          </div>
+        </div>
+        <p class="font-display font-bold text-2xl" id="statShiftsMonth">0</p>
+        <p style="font-size:12px;color:var(--fg-muted);margin-top:2px;">Shifts This Month</p>
+      </div>
+      <div class="stat-card fade-up" style="animation-delay:0.2s;">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:#a78bfa;border-radius:14px 14px 0 0;"></div>
+        <div class="flex items-center justify-between mb-3">
+          <div style="width:40px;height:40px;border-radius:10px;background:rgba(167,139,250,0.12);display:flex;align-items:center;justify-content:center;">
+            <i class="fa-solid fa-dollar-sign" style="color:#a78bfa;font-size:14px;"></i>
+          </div>
+        </div>
+        <p class="font-display font-bold text-2xl" id="statTotalPay">$0</p>
+        <p style="font-size:12px;color:var(--fg-muted);margin-top:2px;">Total Payroll (Month)</p>
+      </div>
+    </div>
+
+    <!-- Recent activity + Today's shifts -->
+    <div class="grid gap-6" style="grid-template-columns: 1.4fr 1fr;">
+      <div class="card p-5 fade-up" style="animation-delay:0.25s;">
+        <h3 class="font-display font-semibold text-base mb-4">Recent Employees</h3>
+        <div id="recentEmployees" class="flex flex-col gap-3"></div>
+      </div>
+      <div class="card p-5 fade-up" style="animation-delay:0.3s;">
+        <h3 class="font-display font-semibold text-base mb-4">Today's Shifts</h3>
+        <div id="todayShifts" class="flex flex-col gap-3"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Employees Page -->
+  <section id="page-employees" class="page" style="display:none;">
+    <div class="flex items-center justify-between mb-6 fade-up">
+      <div>
+        <h2 class="font-display font-bold text-2xl mb-1">Employees</h2>
+        <p style="color:var(--fg-muted);font-size:14px;">Manage your team members</p>
+      </div>
+      <button class="btn-primary" onclick="openAddEmployee()">
+        <i class="fa-solid fa-plus"></i> Add Employee
+      </button>
+    </div>
+    <div class="card fade-up" style="animation-delay:0.05s;">
+      <div class="p-4 flex items-center gap-3" style="border-bottom:1px solid var(--border);">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2" style="color:var(--fg-muted);font-size:13px;"></i>
+          <input type="text" class="input-field" style="padding-left:36px;" placeholder="Search employees..." id="empSearch" oninput="renderEmployees()">
+        </div>
+        <select class="input-field" style="width:160px;" id="empFilterDept" onchange="renderEmployees()">
+          <option value="">All Departments</option>
+          <option value="Kitchen">Kitchen</option>
+          <option value="Service">Service</option>
+          <option value="Management">Management</option>
+          <option value="Maintenance">Maintenance</option>
+          <option value="Security">Security</option>
+        </select>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Department</th>
+            <th>Role</th>
+            <th>Hourly Rate</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="empTableBody"></tbody>
+      </table>
+      <div id="empEmpty" class="p-12 text-center" style="display:none;">
+        <i class="fa-solid fa-user-slash text-3xl mb-3" style="color:var(--fg-muted);"></i>
+        <p style="color:var(--fg-muted);font-size:14px;">No employees found</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Shifts Page -->
+  <section id="page-shifts" class="page" style="display:none;">
+    <div class="flex items-center justify-between mb-6 fade-up">
+      <div>
+        <h2 class="font-display font-bold text-2xl mb-1">Shift Management</h2>
+        <p style="color:var(--fg-muted);font-size:14px;">Schedule and track employee shifts</p>
+      </div>
+      <button class="btn-primary" onclick="openAddShift()">
+        <i class="fa-solid fa-plus"></i> Assign Shift
+      </button>
+    </div>
+    <div class="card fade-up" style="animation-delay:0.05s;">
+      <div class="p-4 flex items-center gap-3 flex-wrap" style="border-bottom:1px solid var(--border);">
+        <input type="date" class="input-field" style="width:180px;" id="shiftDateFilter" onchange="renderShifts()">
+        <select class="input-field" style="width:160px;" id="shiftTypeFilter" onchange="renderShifts()">
+          <option value="">All Types</option>
+          <option value="Morning">Morning</option>
+          <option value="Afternoon">Afternoon</option>
+          <option value="Night">Night</option>
+        </select>
+        <select class="input-field" style="width:160px;" id="shiftStatusFilter" onchange="renderShifts()">
+          <option value="">All Status</option>
+          <option value="Scheduled">Scheduled</option>
+          <option value="Active">Active</option>
+          <option value="Completed">Completed</option>
+        </select>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Time</th>
+            <th>Hours</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="shiftTableBody"></tbody>
+      </table>
+      <div id="shiftEmpty" class="p-12 text-center" style="display:none;">
+        <i class="fa-solid fa-calendar-xmark text-3xl mb-3" style="color:var(--fg-muted);"></i>
+        <p style="color:var(--fg-muted);font-size:14px;">No shifts found</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Payments Page -->
+  <section id="page-payments" class="page" style="display:none;">
+    <div class="flex items-center justify-between mb-6 fade-up">
+      <div>
+        <h2 class="font-display font-bold text-2xl mb-1">Payment Management</h2>
+        <p style="color:var(--fg-muted);font-size:14px;">Track wages, bonuses, and payment history</p>
+      </div>
+      <button class="btn-primary" onclick="openAddPayment()">
+        <i class="fa-solid fa-plus"></i> Record Payment
+      </button>
+    </div>
+
+    <!-- Payment stats -->
+    <div class="grid gap-4 mb-6 stat-grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="stat-card fade-up" style="animation-delay:0.05s;">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--success);border-radius:14px 14px 0 0;"></div>
+        <p style="font-size:12px;color:var(--fg-muted);margin-bottom:4px;">Total Paid (Month)</p>
+        <p class="font-display font-bold text-xl" id="payTotalPaid">$0</p>
+      </div>
+      <div class="stat-card fade-up" style="animation-delay:0.1s;">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);border-radius:14px 14px 0 0;"></div>
+        <p style="font-size:12px;color:var(--fg-muted);margin-bottom:4px;">Pending Payments</p>
+        <p class="font-display font-bold text-xl" id="payPending">$0</p>
+      </div>
+      <div class="stat-card fade-up" style="animation-delay:0.15s;">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--danger);border-radius:14px 14px 0 0;"></div>
+        <p style="font-size:12px;color:var(--fg-muted);margin-bottom:4px;">Overtime Hours</p>
+        <p class="font-display font-bold text-xl" id="payOvertime">0h</p>
+      </div>
+    </div>
+
+    <div class="card fade-up" style="animation-delay:0.2s;">
+      <div class="p-4 flex items-center gap-3" style="border-bottom:1px solid var(--border);">
+        <input type="month" class="input-field" style="width:180px;" id="payMonthFilter" onchange="renderPayments()">
+        <select class="input-field" style="width:160px;" id="payStatusFilter" onchange="renderPayments()">
+          <option value="">All Status</option>
+          <option value="Paid">Paid</option>
+          <option value="Pending">Pending</option>
+        </select>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Period</th>
+            <th>Hours Worked</th>
+            <th>Overtime</th>
+            <th>Gross Pay</th>
+            <th>Bonus</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="payTableBody"></tbody>
+      </table>
+      <div id="payEmpty" class="p-12 text-center" style="display:none;">
+        <i class="fa-solid fa-receipt text-3xl mb-3" style="color:var(--fg-muted);"></i>
+        <p style="color:var(--fg-muted);font-size:14px;">No payment records found</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Notes Page -->
+  <section id="page-notes" class="page" style="display:none;">
+    <div class="flex items-center justify-between mb-6 fade-up">
+      <div>
+        <h2 class="font-display font-bold text-2xl mb-1">Employee Notes</h2>
+        <p style="color:var(--fg-muted);font-size:14px;">Descriptions, observations, and documentation</p>
+      </div>
+      <button class="btn-primary" onclick="openAddNote()">
+        <i class="fa-solid fa-plus"></i> Add Note
+      </button>
+    </div>
+    <div class="flex gap-3 mb-5 fade-up" style="animation-delay:0.05s;">
+      <select class="input-field" style="width:200px;" id="noteEmpFilter" onchange="renderNotes()">
+        <option value="">All Employees</option>
+      </select>
+      <select class="input-field" style="width:160px;" id="noteCategoryFilter" onchange="renderNotes()">
+        <option value="">All Categories</option>
+        <option value="Performance">Performance</option>
+        <option value="Behavior">Behavior</option>
+        <option value="Attendance">Attendance</option>
+        <option value="General">General</option>
+      </select>
+    </div>
+    <div id="notesGrid" class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));"></div>
+    <div id="notesEmpty" class="p-16 text-center" style="display:none;">
+      <i class="fa-solid fa-note-sticky text-3xl mb-3" style="color:var(--fg-muted);"></i>
+      <p style="color:var(--fg-muted);font-size:14px;">No notes yet. Start documenting employee information.</p>
+    </div>
+  </section>
+</main>
+
+<!-- Employee Detail Panel -->
+<div class="detail-panel" id="detailPanel">
+  <div class="p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="font-display font-semibold text-lg">Employee Profile</h3>
+      <button class="btn-icon" onclick="closeDetail()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="detailContent"></div>
+  </div>
+</div>
+<div id="detailOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:85;display:none;" onclick="closeDetail()"></div>
+
+<!-- Add Employee Modal -->
+<div class="modal-overlay" id="addEmpModal">
+  <div class="modal-content">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-display font-semibold text-lg" id="empModalTitle">Add New Employee</h3>
+      <button class="btn-icon" onclick="closeModal('addEmpModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="empForm" onsubmit="saveEmployee(event)">
+      <input type="hidden" id="empEditId">
+      <div class="flex justify-center mb-5">
+        <div class="photo-upload" id="photoUpload" onclick="document.getElementById('photoInput').click()">
+          <i class="fa-solid fa-camera" style="color:var(--fg-muted);font-size:20px;" id="photoIcon"></i>
+          <span style="font-size:10px;color:var(--fg-muted);margin-top:4px;" id="photoText">Upload Photo</span>
+          <img id="photoPreview" style="display:none;">
+          <input type="file" id="photoInput" accept="image/*" style="display:none;" onchange="previewPhoto(event)">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">First Name *</label>
+          <input type="text" class="input-field" id="empFirstName" required>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Last Name *</label>
+          <input type="text" class="input-field" id="empLastName" required>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Email *</label>
+        <input type="email" class="input-field" id="empEmail" required>
+      </div>
+      <div class="mb-3">
+        <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Phone</label>
+        <input type="tel" class="input-field" id="empPhone">
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Department *</label>
+          <div style="position:relative;">
+            <select class="input-field" id="empDept" required>
+              <option value="">Select...</option>
+              <option value="Kitchen">Kitchen</option>
+              <option value="Service">Service</option>
+              <option value="Management">Management</option>
+              <option value="Maintenance">Maintenance</option>
+              <option value="Security">Security</option>
+            </select>
+            <i class="fa-solid fa-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--fg-muted);font-size:10px;pointer-events:none;"></i>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Role *</label>
+          <input type="text" class="input-field" id="empRole" required placeholder="e.g. Chef, Waiter">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Hourly Rate ($) *</label>
+          <input type="number" class="input-field" id="empRate" required min="0" step="0.50">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Status</label>
+          <div style="position:relative;">
+            <select class="input-field" id="empStatus">
+              <option value="Active">Active</option>
+              <option value="On Leave">On Leave</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+            <i class="fa-solid fa-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--fg-muted);font-size:10px;pointer-events:none;"></i>
+          </div>
+        </div>
+      </div>
+      <div class="mb-5">
+        <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Description / Bio</label>
+        <textarea class="input-field" id="empBio" placeholder="Brief description about the employee..."></textarea>
+      </div>
+      <div class="flex gap-3 justify-end">
+        <button type="button" class="btn-secondary" onclick="closeModal('addEmpModal')">Cancel</button>
+        <button type="submit" class="btn-primary" id="empSubmitBtn">Add Employee</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Shift Modal -->
+<div class="modal-overlay" id="addShiftModal">
+  <div class="modal-content">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-display font-semibold text-lg">Assign Shift</h3>
+      <button class="btn-icon" onclick="closeModal('addShiftModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form onsubmit="saveShift(event)">
+      <input type="hidden" id="shiftEditId">
+      <div class="mb-3">
+        <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Employee *</label>
+        <div style="position:relative;">
+          <select class="input-field" id="shiftEmp" required></select>
+          <i class="fa-solid fa-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--fg-muted);font-size:10px;pointer-events:none;"></i>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Date *</label>
+          <input type="date" class="input-field" id="shiftDate" required>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Shift Type *</label>
+          <div style="position:relative;">
+            <select class="input-field" id="shiftType" required>
+              <option value="">Select...</option>
+              <option value="Morning">Morning</option>
+              <option value="Afternoon">Afternoon</option>
+              <option value="Night">Night</option>
+            </select>
+            <i class="fa-solid fa-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--fg-muted);font-size:10px;pointer-events:none;"></i>
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-5">
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Start Time *</label>
+          <input type="time" class="input-field" id="shiftStart" required>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">End Time *</label>
+          <input type="time" class="input-field" id="shiftEnd" required>
+        </div>
+      </div>
+      <div class="flex gap-3 justify-end">
+        <button type="button" class="btn-secondary" onclick="closeModal('addShiftModal')">Cancel</button>
+        <button type="submit" class="btn-primary">Assign Shift</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Payment Modal -->
+<div class="modal-overlay" id="addPayModal">
+  <div class="modal-content">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-display font-semibold text-lg">Record Payment</h3>
+      <button class="btn-icon" onclick="closeModal('addPayModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form onsubmit="savePayment(event)">
+      <input type="hidden" id="payEditId">
+      <div class="mb-3">
+        <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Employee *</label>
+        <div style="position:relative;">
+          <select class="input-field" id="payEmp" required></select>
+          <i class="fa-solid fa-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--fg-muted);font-size:10px;pointer-events:none;"></i>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Period (Month) *</label>
+          <input type="month" class="input-field" id="payPeriod" required>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Status</label>
+          <div style="position:relative;">
+            <select class="input-field" id="payStatus">
+              <option value="Pending">Pending</option>
+              <option value="Paid">Paid</option>
+            </select>
+            <i class="fa-solid fa-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--fg-muted);font-size:10px;pointer-events:none;"></i>
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Hours Worked *</label>
+          <input type="number" class="input-field" id="payHours" required min="0" step="0.5">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Overtime Hours</label>
+          <input type="number" class="input-field" id="payOvertime" min="0" step="0.5" value="0">
+        </div>
+      </div>
+      <div class="mb-5">
+        <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Bonus ($)</label>
+        <input type="number" class="input-field" id="payBonus" min="0" step="0.01" value="0">
+      </div>
+      <div class="flex gap-3 justify-end">
+        <button type="button" class="btn-secondary" onclick="closeModal('addPayModal')">Cancel</button>
+        <button type="submit" class="btn-primary">Save Payment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Note Modal -->
+<div class="modal-overlay" id="addNoteModal">
+  <div class="modal-content">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-display font-semibold text-lg">Add Note</h3>
+      <button class="btn-icon" onclick="closeModal('addNoteModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form onsubmit="saveNote(event)">
+      <input type="hidden" id="noteEditId">
+      <div class="mb-3">
+        <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Employee *</label>
+        <div style="position:relative;">
+          <select class="input-field" id="noteEmp" required></select>
+          <i class="fa-solid fa-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--fg-muted);font-size:10px;pointer-events:none;"></i>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Category *</label>
+          <div style="position:relative;">
+            <select class="input-field" id="noteCategory" required>
+              <option value="">Select...</option>
+              <option value="Performance">Performance</option>
+              <option value="Behavior">Behavior</option>
+              <option value="Attendance">Attendance</option>
+              <option value="General">General</option>
+            </select>
+            <i class="fa-solid fa-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--fg-muted);font-size:10px;pointer-events:none;"></i>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Priority</label>
+          <div style="position:relative;">
+            <select class="input-field" id="notePriority">
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+            <i class="fa-solid fa-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--fg-muted);font-size:10px;pointer-events:none;"></i>
+          </div>
+        </div>
+      </div>
+      <div class="mb-5">
+        <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Note Content *</label>
+        <textarea class="input-field" id="noteContent" required placeholder="Write your note here..." style="min-height:120px;"></textarea>
+      </div>
+      <div class="flex gap-3 justify-end">
+        <button type="button" class="btn-secondary" onclick="closeModal('addNoteModal')">Cancel</button>
+        <button type="submit" class="btn-primary">Save Note</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-content" style="max-width:400px;text-align:center;">
+    <div style="width:56px;height:56px;border-radius:16px;background:var(--danger-dim);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+      <i class="fa-solid fa-trash" style="color:var(--danger);font-size:20px;"></i>
+    </div>
+    <h3 class="font-display font-semibold text-lg mb-2">Confirm Delete</h3>
+    <p style="color:var(--fg-muted);font-size:14px;margin-bottom:20px;" id="confirmText">Are you sure you want to delete this item?</p>
+    <div class="flex gap-3 justify-center">
+      <button class="btn-secondary" onclick="closeModal('confirmModal')">Cancel</button>
+      <button class="btn-primary" style="background:var(--danger);" id="confirmDeleteBtn" onclick="">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== DATA LAYER ====================
+function getData(key) {
+  try { return JSON.parse(localStorage.getItem('sf_' + key)) || []; }
+  catch { return []; }
+}
+function setData(key, data) {
+  localStorage.setItem('sf_' + key, JSON.stringify(data));
+}
+function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+
+// Seed initial data if empty
+function seedData() {
+  if (getData('employees').length > 0) return;
+
+  const photos = [
+    'https://picsum.photos/seed/emp1/200/200.jpg',
+    'https://picsum.photos/seed/emp2/200/200.jpg',
+    'https://picsum.photos/seed/emp3/200/200.jpg',
+    'https://picsum.photos/seed/emp4/200/200.jpg',
+    'https://picsum.photos/seed/emp5/200/200.jpg',
+    'https://picsum.photos/seed/emp6/200/200.jpg',
+  ];
+
+  const employees = [
+    { id: genId(), firstName: 'Marcus', lastName: 'Chen', email: 'marcus@shiftflow.com', phone: '(555) 201-3344', department: 'Kitchen', role: 'Head Chef', rate: 32, status: 'Active', photo: photos[0], bio: 'Experienced head chef with 12 years in fine dining. Specializes in Asian fusion cuisine.', createdAt: Date.now() - 86400000 * 30 },
+    { id: genId(), firstName: 'Sofia', lastName: 'Rodriguez', email: 'sofia@shiftflow.com', phone: '(555) 302-4455', department: 'Service', role: 'Floor Manager', rate: 26, status: 'Active', photo: photos[1], bio: 'Excellent leadership skills with a focus on customer satisfaction and team coordination.', createdAt: Date.now() - 86400000 * 25 },
+    { id: genId(), firstName: 'James', lastName: 'Okafor', email: 'james@shiftflow.com', phone: '(555) 403-5566', department: 'Maintenance', role: 'Facilities Lead', rate: 22, status: 'Active', photo: photos[2], bio: 'Skilled technician handling all facility maintenance and equipment repairs.', createdAt: Date.now() - 86400000 * 20 },
+    { id: genId(), firstName: 'Aisha', lastName: 'Patel', email: 'aisha@shiftflow.com', phone: '(555) 504-6677', department: 'Management', role: 'Operations Coordinator', rate: 35, status: 'Active', photo: photos[3], bio: 'Oversees daily operations, scheduling, and cross-department communication.', createdAt: Date.now() - 86400000 * 15 },
+    { id: genId(), firstName: 'Liam', lastName: 'Byrne', email: 'liam@shiftflow.com', phone: '(555) 605-7788', department: 'Security', role: 'Security Supervisor', rate: 24, status: 'Active', photo: photos[4], bio: 'Former law enforcement professional ensuring safety and security protocols.', createdAt: Date.now() - 86400000 * 10 },
+    { id: genId(), firstName: 'Elena', lastName: 'Volkov', email: 'elena@shiftflow.com', phone: '(555) 706-8899', department: 'Kitchen', role: 'Pastry Chef', rate: 28, status: 'On Leave', photo: photos[5], bio: 'Creative pastry specialist with a passion for artisan desserts and bread.', createdAt: Date.now() - 86400000 * 5 },
+  ];
+  setData('employees', employees);
+
+  const today = new Date();
+  const fmt = d => d.toISOString().split('T')[0];
+  const shifts = [];
+  const types = ['Morning', 'Afternoon', 'Night'];
+  const times = { Morning: ['06:00', '14:00'], Afternoon: ['14:00', '22:00'], Night: ['22:00', '06:00'] };
+
+  // Generate shifts for this month
+  for (let d = 0; d < 15; d++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - d);
+    const numShifts = 2 + Math.floor(Math.random() * 3);
+    const shuffled = [...employees].sort(() => Math.random() - 0.5).slice(0, numShifts);
+    shuffled.forEach(emp => {
+      if (emp.status === 'On Leave' && d < 5) return;
+      const type = types[Math.floor(Math.random() * types.length)];
+      const [start, end] = times[type];
+      let status = 'Completed';
+      if (d === 0) status = Math.random() > 0.5 ? 'Active' : 'Scheduled';
+      else if (d === 1) status = 'Completed';
+
+      shifts.push({
+        id: genId(),
+        employeeId: emp.id,
+        date: fmt(date),
+        type,
+        start,
+        end,
+        status,
+        createdAt: Date.now() - d * 86400000
+      });
+    });
+  }
+  setData('shifts', shifts);
+
+  // Generate payments for last 2 months
+  const payments = [];
+  const thisMonth = today.toISOString().slice(0, 7);
+  const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().slice(0, 7);
+
+  employees.forEach(emp => {
+    [lastMonth, thisMonth].forEach(period => {
+      const hours = 120 + Math.floor(Math.random() * 80);
+      const ot = Math.floor(Math.random() * 15);
+      const bonus = Math.random() > 0.6 ? Math.floor(Math.random() * 300) : 0;
+      payments.push({
+        id: genId(),
+        employeeId: emp.id,
+        period,
+        hours,
+        overtime: ot,
+        bonus,
+        grossPay: (hours * emp.rate) + (ot * emp.rate * 1.5) + bonus,
+        status: period === thisMonth ? 'Pending' : 'Paid',
+        createdAt: Date.now()
+      });
+    });
+  });
+  setData('payments', payments);
+
+  // Seed notes
+  const notes = [
+    { id: genId(), employeeId: employees[0].id, category: 'Performance', priority: 'High', content: 'Outstanding performance during the weekend dinner service. Managed to handle 150+ covers with zero complaints. Consider for promotion review.', createdAt: Date.now() - 86400000 * 2 },
+    { id: genId(), employeeId: employees[1].id, category: 'Attendance', priority: 'Medium', content: 'Arrived 15 minutes late on Tuesday and Thursday. Had a conversation about punctuality expectations. Promised to improve next week.', createdAt: Date.now() - 86400000 * 3 },
+    { id: genId(), employeeId: employees[2].id, category: 'General', priority: 'Low', content: 'Completed HVAC maintenance ahead of schedule. System running at optimal efficiency. Great proactive work.', createdAt: Date.now() - 86400000 * 5 },
+    { id: genId(), employeeId: employees[3].id, category: 'Performance', priority: 'High', content: 'Successfully reorganized the shift scheduling system, reducing overlap by 20% and cutting overtime costs significantly.', createdAt: Date.now() - 86400000 * 7 },
+    { id: genId(), employeeId: employees[4].id, category: 'Behavior', priority: 'Medium', content: 'Handled a difficult situation with a disruptive visitor professionally. Followed all protocols correctly. Commended by team.', createdAt: Date.now() - 86400000 * 4 },
+    { id: genId(), employeeId: employees[5].id, category: 'General', priority: 'Low', content: 'On approved leave for family reasons. Expected return in two weeks. Cross-training plan prepared for coverage.', createdAt: Date.now() - 86400000 * 1 },
+  ];
+  setData('notes', notes);
+}
+seedData();
+
+// ==================== UTILITY ====================
+function getEmp(id) { return getData('employees').find(e => e.id === id); }
+function getEmpName(id) {
+  const e = getEmp(id);
+  return e ? `${e.firstName} ${e.lastName}` : 'Unknown';
+}
+function getEmpPhoto(id) {
+  const e = getEmp(id);
+  return e ? (e.photo || '') : '';
+}
+function fmtDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function fmtMonth(monthStr) {
+  const [y, m] = monthStr.split('-');
+  const d = new Date(parseInt(y), parseInt(m) - 1);
+  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+function calcHours(start, end) {
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  let diff = (eh * 60 + em) - (sh * 60 + sm);
+  if (diff < 0) diff += 24 * 60;
+  return Math.round(diff / 60 * 10) / 10;
+}
+function getShiftColor(type) {
+  return { Morning: 'var(--accent)', Afternoon: 'var(--info)', Night: '#a78bfa' }[type] || 'var(--fg-muted)';
+}
+function getStatusBadge(status) {
+  const map = {
+    Active: { bg: 'var(--success-dim)', color: 'var(--success)', icon: 'fa-circle' },
+    'On Leave': { bg: 'rgba(251,191,36,0.12)', color: '#fbbf24', icon: 'fa-circle' },
+    Inactive: { bg: 'var(--danger-dim)', color: 'var(--danger)', icon: 'fa-circle' },
+    Scheduled: { bg: 'var(--info-dim)', color: 'var(--info)', icon: 'fa-clock' },
+    Completed: { bg: 'var(--success-dim)', color: 'var(--success)', icon: 'fa-check' },
+    Paid: { bg: 'var(--success-dim)', color: 'var(--success)', icon: 'fa-check' },
+    Pending: { bg: 'rgba(251,191,36,0.12)', color: '#fbbf24', icon: 'fa-hourglass-half' },
+  };
+  const s = map[status] || { bg: 'var(--bg-hover)', color: 'var(--fg-muted)', icon: 'fa-circle' };
+  return `<span class="badge" style="background:${s.bg};color:${s.color};"><i class="fa-solid ${s.icon}" style="font-size:6px;"></i>${status}</span>`;
+}
+function getCatColor(cat) {
+  return { Performance: 'var(--accent)', Behavior: 'var(--danger)', Attendance: 'var(--info)', General: 'var(--success)' }[cat] || 'var(--fg-muted)';
+}
+function getPriorityDot(p) {
+  return { Low: 'var(--success)', Medium: '#fbbf24', High: 'var(--danger)' }[p] || 'var(--fg-muted)';
+}
+function defaultPhoto(name) {
+  return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="#1c1f2e"/><text x="100" y="115" text-anchor="middle" fill="#7a7d8e" font-family="sans-serif" font-size="64" font-weight="bold">${(name||'?')[0]}</text></svg>`)}`;
+}
+
+// ==================== TOAST ====================
+function showToast(msg, type = 'success') {
+  const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+  const colors = { success: 'var(--success)', error: 'var(--danger)', info: 'var(--info)' };
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `<i class="fa-solid ${icons[type]}" style="color:${colors[type]};font-size:16px;"></i><span>${msg}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ==================== MODAL ====================
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ==================== NAVIGATION ====================
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  document.getElementById('page-' + page).style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.page === page);
+  });
+  // Update mobile nav colors
+  document.querySelectorAll('.mobile-nav button').forEach((btn, i) => {
+    const pages = ['dashboard', 'employees', 'shifts', 'payments', 'notes'];
+    btn.style.color = pages[i] === page ? 'var(--accent)' : 'var(--fg-muted)';
+  });
+  // Refresh page data
+  if (page === 'dashboard') refreshDashboard();
+  if (page === 'employees') renderEmployees();
+  if (page === 'shifts') renderShifts();
+  if (page === 'payments') renderPayments();
+  if (page === 'notes') { populateNoteFilters(); renderNotes(); }
+}
+
+// ==================== DASHBOARD ====================
+function refreshDashboard() {
+  const emps = getData('employees');
+  const shifts = getData('shifts');
+  const payments = getData('payments');
+  const today = new Date().toISOString().split('T')[0];
+  const thisMonth = new Date().toISOString().slice(0, 7);
+
+  document.getElementById('statTotalEmp').textContent = emps.filter(e => e.status === 'Active').length;
+  document.getElementById('statOnShift').textContent = shifts.filter(s => s.date === today && s.status === 'Active').length;
+  document.getElementById('statShiftsMonth').textContent = shifts.filter(s => s.date.startsWith(thisMonth)).length;
+
+  const totalPay = payments.filter(p => p.period === thisMonth).reduce((sum, p) => sum + (p.grossPay || 0), 0);
+  document.getElementById('statTotalPay').textContent = '$' + totalPay.toLocaleString();
+
+  // Recent employees
+  const recent = [...emps].sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
+  document.getElementById('recentEmployees').innerHTML = recent.map(emp => `
+    <div class="flex items-center gap-3 p-2 rounded-lg cursor-pointer" style="transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="openDetail('${emp.id}')">
+      <img src="${emp.photo || defaultPhoto(emp.firstName)}" class="avatar" alt="${emp.firstName}" onerror="this.src='${defaultPhoto(emp.firstName)}'">
+      <div class="flex-1 min-w-0">
+        <p class="font-medium text-sm truncate">${emp.firstName} ${emp.lastName}</p>
+        <p style="font-size:12px;color:var(--fg-muted);">${emp.role} — ${emp.department}</p>
+      </div>
+      ${getStatusBadge(emp.status)}
+    </div>
+  `).join('');
+
+  // Today's shifts
+  const todayShifts = shifts.filter(s => s.date === today).slice(0, 5);
+  document.getElementById('todayShifts').innerHTML = todayShifts.length === 0
+    ? '<p style="color:var(--fg-muted);font-size:13px;text-align:center;padding:20px;">No shifts scheduled for today</p>'
+    : todayShifts.map(s => {
+      const color = getShiftColor(s.type);
+      return `
+      <div class="flex items-center gap-3 p-2 rounded-lg" style="transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+        <div class="shift-bar" style="background:${color};"></div>
+        <div class="flex-1 min-w-0">
+          <p class="font-medium text-sm truncate">${getEmpName(s.employeeId)}</p>
+          <p style="font-size:12px;color:var(--fg-muted);">${s.type} · ${s.start} - ${s.end}</p>
+        </div>
+        ${getStatusBadge(s.status)}
+      </div>`;
+    }).join('');
+}
+
+// ==================== EMPLOYEES ====================
+function renderEmployees() {
+  const emps = getData('employees');
+  const search = document.getElementById('empSearch').value.toLowerCase();
+  const dept = document.getElementById('empFilterDept').value;
+
+  let filtered = emps.filter(e => {
+    const matchSearch = `${e.firstName} ${e.lastName} ${e.email} ${e.role}`.toLowerCase().includes(search);
+    const matchDept = !dept || e.department === dept;
+    return matchSearch && matchDept;
+  });
+
+  const tbody = document.getElementById('empTableBody');
+  const empty = document.getElementById('empEmpty');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = filtered.map(emp => `
+    <tr style="cursor:pointer;" onclick="openDetail('${emp.id}')">
+      <td>
+        <div class="flex items-center gap-3">
+          <img src="${emp.photo || defaultPhoto(emp.firstName)}" class="avatar" alt="${emp.firstName}" onerror="this.src='${defaultPhoto(emp.firstName)}'">
+          <div>
+            <p class="font-medium text-sm">${emp.firstName} ${emp.lastName}</p>
+            <p style="font-size:12px;color:var(--fg-muted);">${emp.email}</p>
+          </div>
+        </div>
+      </td>
+      <td style="font-size:13px;">${emp.department}</td>
+      <td style="font-size:13px;">${emp.role}</td>
+      <td style="font-size:13px;font-weight:600;">$${emp.rate.toFixed(2)}</td>
+      <td>${getStatusBadge(emp.status)}</td>
+      <td>
+        <div class="flex gap-1" onclick="event.stopPropagation();">
+          <button class="btn-icon" title="Edit" onclick="editEmployee('${emp.id}')"><i class="fa-solid fa-pen" style="font-size:11px;"></i></button>
+          <button class="btn-icon" title="Delete" style="color:var(--danger);" onclick="confirmDelete('employee','${emp.id}')"><i class="fa-solid fa-trash" style="font-size:11px;"></i></button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openAddEmployee() {
+  document.getElementById('empModalTitle').textContent = 'Add New Employee';
+  document.getElementById('empSubmitBtn').textContent = 'Add Employee';
+  document.getElementById('empForm').reset();
+  document.getElementById('empEditId').value = '';
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('photoIcon').style.display = '';
+  document.getElementById('photoText').style.display = '';
+  openModal('addEmpModal');
+}
+
+function editEmployee(id) {
+  const emp = getEmp(id);
+  if (!emp) return;
+  document.getElementById('empModalTitle').textContent = 'Edit Employee';
+  document.getElementById('empSubmitBtn').textContent = 'Save Changes';
+  document.getElementById('empEditId').value = id;
+  document.getElementById('empFirstName').value = emp.firstName;
+  document.getElementById('empLastName').value = emp.lastName;
+  document.getElementById('empEmail').value = emp.email;
+  document.getElementById('empPhone').value = emp.phone || '';
+  document.getElementById('empDept').value = emp.department;
+  document.getElementById('empRole').value = emp.role;
+  document.getElementById('empRate').value = emp.rate;
+  document.getElementById('empStatus').value = emp.status;
+  document.getElementById('empBio').value = emp.bio || '';
+
+  if (emp.photo) {
+    document.getElementById('photoPreview').src = emp.photo;
+    document.getElementById('photoPreview').style.display = 'block';
+    document.getElementById('photoIcon').style.display = 'none';
+    document.getElementById('photoText').style.display = 'none';
+  } else {
+    document.getElementById('photoPreview').style.display = 'none';
+    document.getElementById('photoIcon').style.display = '';
+    document.getElementById('photoText').style.display = '';
+  }
+  openModal('addEmpModal');
+}
+
+let tempPhoto = '';
+function previewPhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    tempPhoto = ev.target.result;
+    document.getElementById('photoPreview').src = tempPhoto;
+    document.getElementById('photoPreview').style.display = 'block';
+    document.getElementById('photoIcon').style.display = 'none';
+    document.getElementById('photoText').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveEmployee(e) {
+  e.preventDefault();
+  const emps = getData('employees');
+  const editId = document.getElementById('empEditId').value;
+
+  const data = {
+    firstName: document.getElementById('empFirstName').value.trim(),
+    lastName: document.getElementById('empLastName').value.trim(),
+    email: document.getElementById('empEmail').value.trim(),
+    phone: document.getElementById('empPhone').value.trim(),
+    department: document.getElementById('empDept').value,
+    role: document.getElementById('empRole').value.trim(),
+    rate: parseFloat(document.getElementById('empRate').value),
+    status: document.getElementById('empStatus').value,
+    bio: document.getElementById('empBio').value.trim(),
+  };
+
+  if (editId) {
+    const idx = emps.findIndex(e => e.id === editId);
+    if (idx !== -1) {
+      emps[idx] = { ...emps[idx], ...data };
+      if (tempPhoto) emps[idx].photo = tempPhoto;
+      showToast('Employee updated successfully');
+    }
+  } else {
+    emps.push({
+      id: genId(),
+      ...data,
+      photo: tempPhoto || '',
+      createdAt: Date.now()
+    });
+    showToast('Employee added successfully');
+  }
+
+  setData('employees', emps);
+  tempPhoto = '';
+  closeModal('addEmpModal');
+  switchPage(document.querySelector('.nav-item.active')?.dataset.page || 'dashboard');
+}
+
+// ==================== EMPLOYEE DETAIL PANEL ====================
+function openDetail(id) {
+  const emp = getEmp(id);
+  if (!emp) return;
+
+  const shifts = getData('shifts').filter(s => s.employeeId === id);
+  const payments = getData('payments').filter(p => p.employeeId === id);
+  const notes = getData('notes').filter(n => n.employeeId === id).sort((a, b) => b.createdAt - a.createdAt);
+  const thisMonth = new Date().toISOString().slice(0, 7);
+
+  const totalHours = shifts.filter(s => s.date.startsWith(thisMonth)).reduce((sum, s) => sum + calcHours(s.start, s.end), 0);
+  const totalEarned = payments.filter(p => p.period === thisMonth).reduce((sum, p) => sum + (p.grossPay || 0), 0);
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="text-center mb-6">
+      <img src="${emp.photo || defaultPhoto(emp.firstName)}" class="avatar-lg mx-auto mb-3" alt="${emp.firstName}" onerror="this.src='${defaultPhoto(emp.firstName)}'">
+      <h4 class="font-display font-bold text-xl">${emp.firstName} ${emp.lastName}</h4>
+      <p style="color:var(--fg-muted);font-size:13px;">${emp.role} · ${emp.department}</p>
+      <div class="flex justify-center mt-2">${getStatusBadge(emp.status)}</div>
+    </div>
+
+    ${emp.bio ? `<div class="note-card mb-5"><p style="font-size:13px;color:var(--fg-muted);line-height:1.6;">${emp.bio}</p></div>` : ''}
+
+    <div class="grid grid-cols-2 gap-3 mb-5">
+      <div class="card p-3 text-center">
+        <p style="font-size:11px;color:var(--fg-muted);margin-bottom:2px;">This Month</p>
+        <p class="font-display font-bold">${totalHours.toFixed(1)}h</p>
+        <p style="font-size:10px;color:var(--fg-muted);">Hours Worked</p>
+      </div>
+      <div class="card p-3 text-center">
+        <p style="font-size:11px;color:var(--fg-muted);margin-bottom:2px;">This Month</p>
+        <p class="font-display font-bold">$${totalEarned.toLocaleString()}</p>
+        <p style="font-size:10px;color:var(--fg-muted);">Earned</p>
+      </div>
+    </div>
+
+    <div class="mb-5">
+      <p style="font-size:12px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Contact</p>
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-2" style="font-size:13px;"><i class="fa-solid fa-envelope" style="color:var(--fg-muted);width:16px;"></i>${emp.email}</div>
+        <div class="flex items-center gap-2" style="font-size:13px;"><i class="fa-solid fa-phone" style="color:var(--fg-muted);width:16px;"></i>${emp.phone || 'Not provided'}</div>
+        <div class="flex items-center gap-2" style="font-size:13px;"><i class="fa-solid fa-dollar-sign" style="color:var(--fg-muted);width:16px;"></i>$${emp.rate.toFixed(2)}/hr</div>
+      </div>
+    </div>
+
+    <div class="mb-5">
+      <div class="flex items-center justify-between mb-3">
+        <p style="font-size:12px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.5px;">Recent Notes (${notes.length})</p>
+      </div>
+      ${notes.length === 0 ? '<p style="font-size:13px;color:var(--fg-muted);">No notes for this employee.</p>' :
+        notes.slice(0, 3).map(n => `
+          <div class="note-card mb-2">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="pulse-dot" style="background:${getPriorityDot(n.priority)};"></div>
+              <span style="font-size:11px;font-weight:600;color:${getCatColor(n.category)};">${n.category}</span>
+              <span style="font-size:10px;color:var(--fg-muted);margin-left:auto;">${new Date(n.createdAt).toLocaleDateString()}</span>
+            </div>
+            <p style="font-size:12px;color:var(--fg-muted);line-height:1.5;">${n.content}</p>
+          </div>
+        `).join('')}
+    </div>
+
+    <div class="mb-5">
+      <p style="font-size:12px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Recent Shifts</p>
+      ${shifts.length === 0 ? '<p style="font-size:13px;color:var(--fg-muted);">No shifts assigned.</p>' :
+        shifts.slice(0, 4).map(s => `
+          <div class="flex items-center gap-3 py-2" style="border-bottom:1px solid var(--border);">
+            <div class="shift-bar" style="background:${getShiftColor(s.type)};"></div>
+            <div class="flex-1">
+              <p style="font-size:12px;">${fmtDate(s.date)}</p>
+              <p style="font-size:11px;color:var(--fg-muted);">${s.type} · ${s.start}–${s.end}</p>
+            </div>
+            ${getStatusBadge(s.status)}
+          </div>
+        `).join('')}
+    </div>
+
+    <div class="flex gap-2">
+      <button class="btn-primary btn-sm flex-1" onclick="closeDetail();editEmployee('${emp.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+      <button class="btn-secondary btn-sm flex-1" onclick="closeDetail();confirmDelete('employee','${emp.id}')"><i class="fa-solid fa-trash"></i> Remove</button>
+    </div>
+  `;
+
+  document.getElementById('detailPanel').classList.add('open');
+  document.getElementById('detailOverlay').style.display = 'block';
+}
+
+function closeDetail() {
+  document.getElementById('detailPanel').classList.remove('open');
+  document.getElementById('detailOverlay').style.display = 'none';
+}
+
+// ==================== SHIFTS ====================
+function populateEmpSelect(selectId, includeAll) {
+  const emps = getData('employees').filter(e => e.status === 'Active');
+  const sel = document.getElementById(selectId);
+  const current = sel.value;
+  sel.innerHTML = includeAll ? '<option value="">All Employees</option>' : '';
+  emps.forEach(e => {
+    sel.innerHTML += `<option value="${e.id}">${e.firstName} ${e.lastName}</option>`;
+  });
+  sel.value = current;
+}
+
+function openAddShift() {
+  populateEmpSelect('shiftEmp', false);
+  document.getElementById('shiftEditId').value = '';
+  document.getElementById('shiftDate').value = new Date().toISOString().split('T')[0];
+  document.querySelector('#addShiftModal form').reset();
+  document.getElementById('shiftDate').value = new Date().toISOString().split('T')[0];
+  openModal('addShiftModal');
+}
+
+function saveShift(e) {
+  e.preventDefault();
+  const shifts = getData('shifts');
+  const editId = document.getElementById('shiftEditId').value;
+  const start = document.getElementById('shiftStart').value;
+  const end = document.getElementById('shiftEnd').value;
+
+  const data = {
+    employeeId: document.getElementById('shiftEmp').value,
+    date: document.getElementById('shiftDate').value,
+    type: document.getElementById('shiftType').value,
+    start,
+    end,
+  };
+
+  if (editId) {
+    const idx = shifts.findIndex(s => s.id === editId);
+    if (idx !== -1) { shifts[idx] = { ...shifts[idx], ...data }; showToast('Shift updated'); }
+  } else {
+    shifts.push({ id: genId(), ...data, status: 'Scheduled', createdAt: Date.now() });
+    showToast('Shift assigned successfully');
+  }
+
+  setData('shifts', shifts);
+  closeModal('addShiftModal');
+  renderShifts();
+}
+
+function renderShifts() {
+  const shifts = getData('shifts');
+  const dateF = document.getElementById('shiftDateFilter').value;
+  const typeF = document.getElementById('shiftTypeFilter').value;
+  const statusF = document.getElementById('shiftStatusFilter').value;
+
+  let filtered = shifts.filter(s => {
+    return (!dateF || s.date === dateF) && (!typeF || s.type === typeF) && (!statusF || s.status === statusF);
+  }).sort((a, b) => b.date.localeCompare(a.date));
+
+  // Auto-update statuses
+  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  let changed = false;
+  filtered.forEach(s => {
+    if (s.date === today && s.status === 'Scheduled') {
+      const [sh, sm] = s.start.split(':').map(Number);
+      if (sh * 60 + sm <= currentMinutes) {
+        s.status = 'Active';
+        const orig = shifts.find(x => x.id === s.id);
+        if (orig) orig.status = 'Active';
+        changed = true;
+      }
+    }
+    if (s.date === today && s.status === 'Active') {
+      const [sh, sm] = s.start.split(':').map(Number);
+      let endMin;
+      if (s.type === 'Night') {
+        // Night shifts end next day
+        endMin = 24 * 60; // treat end of day as completed for simplicity
+      } else {
+        const [eh, em] = s.end.split(':').map(Number);
+        endMin = eh * 60 + em;
+      }
+      if (currentMinutes >= endMin) {
+        s.status = 'Completed';
+        const orig = shifts.find(x => x.id === s.id);
+        if (orig) orig.status = 'Completed';
+        changed = true;
+      }
+    }
+  });
+  if (changed) setData('shifts', shifts);
+
+  const tbody = document.getElementById('shiftTableBody');
+  const empty = document.getElementById('shiftEmpty');
+
+  if (filtered.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = filtered.map(s => {
+    const hours = calcHours(s.start, s.end);
+    const color = getShiftColor(s.type);
+    return `
+    <tr>
+      <td>
+        <div class="flex items-center gap-2">
+          <img src="${getEmpPhoto(s.employeeId) || defaultPhoto(getEmpName(s.employeeId))}" class="avatar" style="width:34px;height:34px;border-radius:8px;" onerror="this.src='${defaultPhoto(getEmpName(s.employeeId))}'">
+          <span style="font-size:13px;font-weight:500;">${getEmpName(s.employeeId)}</span>
+        </div>
+      </td>
+      <td style="font-size:13px;">${fmtDate(s.date)}</td>
+      <td><div class="flex items-center gap-2"><div class="shift-bar" style="background:${color};"></div><span style="font-size:13px;">${s.type}</span></div></td>
+      <td style="font-size:13px;">${s.start} – ${s.end}</td>
+      <td style="font-size:13px;font-weight:600;">${hours}h</td>
+      <td>${getStatusBadge(s.status)}</td>
+      <td>
+        <div class="flex gap-1">
+          <button class="btn-icon" title="${s.status === 'Scheduled' ? 'Start' : s.status === 'Active' ? 'Complete' : ''}" 
+            ${s.status === 'Completed' ? 'disabled style="opacity:0.3;pointer-events:none;"' : ''}
+            onclick="cycleShiftStatus('${s.id}')">
+            <i class="fa-solid ${s.status === 'Scheduled' ? 'fa-play' : s.status === 'Active' ? 'fa-check' : 'fa-lock'}" style="font-size:11px;"></i>
+          </button>
+          <button class="btn-icon" title="Delete" style="color:var(--danger);" onclick="confirmDelete('shift','${s.id}')"><i class="fa-solid fa-trash" style="font-size:11px;"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function cycleShiftStatus(id) {
+  const shifts = getData('shifts');
+  const s = shifts.find(x => x.id === id);
+  if (!s) return;
+  if (s.status === 'Scheduled') { s.status = 'Active'; showToast('Shift started', 'info'); }
+  else if (s.status === 'Active') { s.status = 'Completed'; showToast('Shift completed', 'success'); }
+  setData('shifts', shifts);
+  renderShifts();
+}
+
+// ==================== PAYMENTS ====================
+function openAddPayment() {
+  populateEmpSelect('payEmp', false);
+  document.getElementById('payEditId').value = '';
+  document.querySelector('#addPayModal form').reset();
+  document.getElementById('payPeriod').value = new Date().toISOString().slice(0, 7);
+  openModal('addPayModal');
+}
+
+function savePayment(e) {
+  e.preventDefault();
+  const payments = getData('payments');
+  const empId = document.getElementById('payEmp').value;
+  const emp = getEmp(empId);
+  const hours = parseFloat(document.getElementById('payHours').value);
+  const ot = parseFloat(document.getElementById('payOvertime').value) || 0;
+  const bonus = parseFloat(document.getElementById('payBonus').value) || 0;
+  const rate = emp ? emp.rate : 0;
+  const grossPay = (hours * rate) + (ot * rate * 1.5) + bonus;
+
+  const data = {
+    employeeId: empId,
+    period: document.getElementById('payPeriod').value,
+    hours,
+    overtime: ot,
+    bonus,
+    grossPay: Math.round(grossPay * 100) / 100,
+    status: document.getElementById('payStatus').value,
+    createdAt: Date.now()
+  };
+
+  payments.push({ id: genId(), ...data });
+  setData('payments', payments);
+  showToast('Payment recorded successfully');
+  closeModal('addPayModal');
+  renderPayments();
+}
+
+function renderPayments() {
+  const payments = getData('payments');
+  const monthF = document.getElementById('payMonthFilter').value;
+  const statusF = document.getElementById('payStatusFilter').value;
+
+  if (!document.getElementById('payMonthFilter').value) {
+    document.getElementById('payMonthFilter').value = new Date().toISOString().slice(0, 7);
+  }
+
+  let filtered = payments.filter(p => {
+    return (!monthF || p.period === monthF) && (!statusF || p.status === statusF);
+  }).sort((a, b) => b.period.localeCompare(a.period));
+
+  // Stats
+  const allMonth = payments.filter(p => p.period === (monthF || new Date().toISOString().slice(0, 7)));
+  document.getElementById('payTotalPaid').textContent = '$' + allMonth.filter(p => p.status === 'Paid').reduce((s, p) => s + (p.grossPay || 0), 0).toLocaleString();
+  document.getElementById('payPending').textContent = '$' + allMonth.filter(p => p.status === 'Pending').reduce((s, p) => s + (p.grossPay || 0), 0).toLocaleString();
+  document.getElementById('payOvertime').textContent = allMonth.reduce((s, p) => s + (p.overtime || 0), 0) + 'h';
+
+  const tbody = document.getElementById('payTableBody');
+  const empty = document.getElementById('payEmpty');
+
+  if (filtered.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = filtered.map(p => `
+    <tr>
+      <td>
+        <div class="flex items-center gap-2">
+          <img src="${getEmpPhoto(p.employeeId) || defaultPhoto(getEmpName(p.employeeId))}" class="avatar" style="width:34px;height:34px;border-radius:8px;" onerror="this.src='${defaultPhoto(getEmpName(p.employeeId))}'">
+          <span style="font-size:13px;font-weight:500;">${getEmpName(p.employeeId)}</span>
+        </div>
+      </td>
+      <td style="font-size:13px;">${fmtMonth(p.period)}</td>
+      <td style="font-size:13px;font-weight:600;">${p.hours}h</td>
+      <td style="font-size:13px;color:var(--danger);">${p.overtime > 0 ? p.overtime + 'h' : '—'}</td>
+      <td style="font-size:13px;font-weight:700;">$${(p.grossPay || 0).toLocaleString()}</td>
+      <td style="font-size:13px;color:var(--success);">${p.bonus > 0 ? '+$' + p.bonus : '—'}</td>
+      <td>${getStatusBadge(p.status)}</td>
+      <td>
+        <div class="flex gap-1">
+          ${p.status === 'Pending' ? `<button class="btn-icon" title="Mark Paid" onclick="markPaid('${p.id}')"><i class="fa-solid fa-check" style="font-size:11px;color:var(--success);"></i></button>` : ''}
+          <button class="btn-icon" title="Delete" style="color:var(--danger);" onclick="confirmDelete('payment','${p.id}')"><i class="fa-solid fa-trash" style="font-size:11px;"></i></button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function markPaid(id) {
+  const payments = getData('payments');
+  const p = payments.find(x => x.id === id);
+  if (p) { p.status = 'Paid'; setData('payments', payments); showToast('Marked as paid', 'success'); renderPayments(); }
+}
+
+// ==================== NOTES ====================
+function populateNoteFilters() {
+  populateEmpSelect('noteEmp', true);
+  populateEmpSelect('noteEmpFilter', true);
+}
+
+function openAddNote() {
+  populateEmpSelect('noteEmp', false);
+  document.getElementById('noteEditId').value = '';
+  document.querySelector('#addNoteModal form').reset();
+  openModal('addNoteModal');
+}
+
+function saveNote(e) {
+  e.preventDefault();
+  const notes = getData('notes');
+  notes.push({
+    id: genId(),
+    employeeId: document.getElementById('noteEmp').value,
+    category: document.getElementById('noteCategory').value,
+    priority: document.getElementById('notePriority').value,
+    content: document.getElementById('noteContent').value.trim(),
+    createdAt: Date.now()
+  });
+  setData('notes', notes);
+  showToast('Note saved successfully');
+  closeModal('addNoteModal');
+  renderNotes();
+}
+
+function renderNotes() {
+  const notes = getData('notes');
+  const empF = document.getElementById('noteEmpFilter').value;
+  const catF = document.getElementById('noteCategoryFilter').value;
+
+  let filtered = notes.filter(n => {
+    return (!empF || n.employeeId === empF) && (!catF || n.category === catF);
+  }).sort((a, b) => b.createdAt - a.createdAt);
+
+  const grid = document.getElementById('notesGrid');
+  const empty = document.getElementById('notesEmpty');
+
+  if (filtered.length === 0) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  grid.innerHTML = filtered.map(n => {
+    const catColor = getCatColor(n.category);
+    const priColor = getPriorityDot(n.priority);
+    const emp = getEmp(n.employeeId);
+    return `
+    <div class="note-card fade-up">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <img src="${emp ? (emp.photo || defaultPhoto(emp.firstName)) : defaultPhoto('?')}" style="width:28px;height:28px;border-radius:7px;object-fit:cover;" onerror="this.src='${defaultPhoto(emp ? emp.firstName : '?')}'">
+          <span style="font-size:13px;font-weight:500;">${getEmpName(n.employeeId)}</span>
+        </div>
+        <button class="btn-icon" style="width:28px;height:28px;font-size:10px;" onclick="confirmDelete('note','${n.id}')"><i class="fa-solid fa-trash" style="color:var(--danger);"></i></button>
+      </div>
+      <div class="flex items-center gap-2 mb-2">
+        <span style="font-size:11px;font-weight:600;color:${catColor};background:${catColor}18;padding:2px 8px;border-radius:4px;">${n.category}</span>
+        <span class="flex items-center gap-1" style="font-size:10px;color:${priColor};"><span class="pulse-dot" style="background:${priColor};width:6px;height:6px;"></span>${n.priority}</span>
+        <span style="font-size:10px;color:var(--fg-muted);margin-left:auto;">${new Date(n.createdAt).toLocaleDateString()}</span>
+      </div>
+      <p style="font-size:13px;color:var(--fg);line-height:1.6;opacity:0.85;">${n.content}</p>
+    </div>`;
+  }).join('');
+}
+
+// ==================== DELETE ====================
+let deleteTarget = { type: '', id: '' };
+function confirmDelete(type, id) {
+  deleteTarget = { type, id };
+  const names = { employee: 'employee', shift: 'shift', payment: 'payment record', note: 'note' };
+  document.getElementById('confirmText').textContent = `Are you sure you want to delete this ${names[type]}? This action cannot be undone.`;
+  openModal('confirmModal');
+}
+
+document.getElementById('confirmDeleteBtn').onclick = function() {
+  const { type, id } = deleteTarget;
+  if (type === 'employee') {
+    let emps = getData('employees');
+    emps = emps.filter(e => e.id !== id);
+    setData('employees', emps);
+    // Also clean related data
+    setData('shifts', getData('shifts').filter(s => s.employeeId !== id));
+    setData('payments', getData('payments').filter(p => p.employeeId !== id));
+    setData('notes', getData('notes').filter(n => n.employeeId !== id));
+    closeDetail();
+    showToast('Employee removed', 'error');
+  } else if (type === 'shift') {
+    setData('shifts', getData('shifts').filter(s => s.id !== id));
+    showToast('Shift deleted', 'error');
+  } else if (type === 'payment') {
+    setData('payments', getData('payments').filter(p => p.id !== id));
+    showToast('Payment deleted', 'error');
+  } else if (type === 'note') {
+    setData('notes', getData('notes').filter(n => n.id !== id));
+    showToast('Note deleted', 'error');
+  }
+  closeModal('confirmModal');
+  switchPage(document.querySelector('.nav-item.active')?.dataset.page || 'dashboard');
+};
+
+// ==================== INIT ====================
+refreshDashboard();
+
+// Set default date filter for shifts
+document.getElementById('shiftDateFilter').value = '';
+
+// Keyboard shortcut: Escape closes modals
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+    closeDetail();
+  }
+});
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
